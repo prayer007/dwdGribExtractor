@@ -20,18 +20,19 @@ class ICON_D2:
     ----------
     locations : dict
         lat, lon in geographic coordinates as a dict for each location
-        e.g
-        .. code-block:: python
-            locationList = {     
-                "Vienna": {
-                    "lat": 48.20,
-                    "lon": 16.37     
-                },
-                "Graz": {
-                    "lat": 47.07,
-                    "lon": 15.43     
+        
+            .. code-block::
+                
+                locationList = {     
+                    "Vienna": {
+                        "lat": 48.20,
+                        "lon": 16.37     
+                    },
+                    "Graz": {
+                        "lat": 47.07,
+                        "lon": 15.43     
+                    }
                 }
-            }
     forecastHours : int
         The forecast hours for which the data is collected
     tmpFp : string
@@ -41,6 +42,15 @@ class ICON_D2:
         grib files in memory (see https://github.com/ecmwf/cfgrib/issues/99 or 
                               https://github.com/ecmwf/eccodes-python/issues/25).
         If no path is given a default directory "tmp/icond2/" will be created.
+        
+    Properties
+    ----------
+    locations : dict
+        The locations to forecast
+    forecastHours : int
+        The number of forecast hours
+    currentRun : string
+        The hours as string of the current run
     '''   
 
     def __init__(self, locations, forecastHours, tmpFp = None):
@@ -58,19 +68,25 @@ class ICON_D2:
             self._forecastHours = tmpFp
         
         self._forecastHours = forecastHours
-        
         self._locations = locations
-    
         self._src = "https://opendata.dwd.de/weather/nwp/icon-d2/grib/"
+        self._currentRun = None
+    
     
     @property
     def locations(self):
         return self._locations  
 
+
     @property
     def forecastHours(self, value):
-        return self._forecastHours    
-
+        return self._forecastHours 
+    
+    
+    @property
+    def currentRun(self):
+        return self._currentRun 
+    
     
     def getCurrentRun(self, now_utc):
         
@@ -108,7 +124,9 @@ class ICON_D2:
             run_hour = "18"            
         if h >= 23 and h < 2:
             run_hour = "21"
-            
+        
+        self._currentRun = run_hour     
+        
         return run_hour
     
             

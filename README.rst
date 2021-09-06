@@ -77,7 +77,7 @@ use eccodes on windows is to install it in an `MSYS <https://www.msys2.org/>`_ e
 
     $ python -m cfgrib selfcheck
     Found: ecCodes v2.20.0.
-    Your system is ready.
+    Your system is ready. 
 
 Linux
 -----
