@@ -23,16 +23,8 @@ class ICON_D2:
         
             .. code-block::
                 
-                locationList = {     
-                    "Vienna": {
-                        "lat": 48.20,
-                        "lon": 16.37     
-                    },
-                    "Graz": {
-                        "lat": 47.07,
-                        "lon": 15.43     
-                    }
-                }
+                variables = ["aswdir_s", "aswdifd_s", "t_2m"]
+                
     forecastHours : int
         The forecast hours for which the data is collected
     tmpFp : string
@@ -195,8 +187,22 @@ class ICON_D2:
             print("Could not get {url}: {err}".format(err = err, url = url))        
 
 
+    def _getVarnameFromNcFile(self, ncFile):
+        
+        var = None
+        
+        for var in ncFile.variables:
+            
+            varDims = len(ncFile.variables[var].shape)
+            
+            if varDims == 3:
+                ncVarName = var
+        
+        return var
 
-    def extractValuesFromGrib(self, fp, ncVarName, data):
+
+
+    def extractValuesFromGrib(self, fp, data):
         
         '''Extract the value from the grib file for the locations.
         
@@ -204,14 +210,13 @@ class ICON_D2:
         ----------
         fp : string
             The filepath to the netCDF file
-        ncVarName : string 
-            The variable name inside the nc file.
         data : pd.Series
             The series is given by reference and will be filled
             iteratively.
         '''   
         
         ncFile = xr.open_dataset(fp, engine='cfgrib')
+        ncVarName = self._getVarnameFromNcFile(ncFile)
         stepValues = ncFile.step.values
         hasStepIndex = True
         
@@ -259,12 +264,9 @@ class ICON_D2:
         dict
             The collected data
         '''
-        
         data = pd.Series()        
-        varKey = iterItem[0]
-        varValues = iterItem[1] 
         
-        urls = self.createDownloadUrl(varKey) # url for one variable
+        urls = self.createDownloadUrl(iterItem) # url for one variable
         
         for url in urls:
     
@@ -279,7 +281,7 @@ class ICON_D2:
             
             # Extract values from grib file
             try:
-                self.extractValuesFromGrib(tmpfp, varValues["ncInternVarName"], data)
+                self.extractValuesFromGrib(tmpfp, data)
             except Exception as err:
                 print("ERROR Can't extract values from grib file: {e}".format(e = err))
         
@@ -293,7 +295,7 @@ class ICON_D2:
         #data.index = data.index.set_levels(localizedIndex, level="datetime")
         
         result = {
-           varKey: data 
+           iterItem: data 
         }        
         
         return result
@@ -308,23 +310,12 @@ class ICON_D2:
         
         Parameters
         ----------
-        varList : dict
-            A dict with variables to collect data.
-            (e.g. "aswdir_s": { "ncInternVarName": "ASWDIR_S" })
+        varList : list
+            A list with variable names
             
-            .. highlight:: python
             .. code-block:: python
-                iconVariablesToLoad = {
-                    "aswdir_s": { # the key is the subdirectory name to the variable in the ftp storage
-                        "ncInternVarName": "ASWDIR_S" # the value is the defined variable name  in the netCDF file
-                    },
-                    "aswdifd_s": {
-                        "ncInternVarName": "ASWDIFD_S"
-                    },
-                    "t_2m": {
-                        "ncInternVarName": "t2m"
-                    }  
-                }
+            
+                variables = ["aswdir_s", "aswdifd_s", "t_2m"]
         cores : int
             Number of cores to use. Default value is None. So no 
             multiprocessing is applied. On some windows machines 
@@ -349,7 +340,7 @@ class ICON_D2:
         else:
             # Parallel processing of downloading and extracting grib data
             pool = multiprocessing.Pool()
-            result = pool.map(self.mainDataCollector, varList.items())
+            result = pool.map(self.mainDataCollector, varList)
             pool.close()
             pool.join()
 

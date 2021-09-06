@@ -99,17 +99,7 @@ Example
         }
     }
     
-    variables = {
-        "aswdir_s": { # the key is the subdirectory name to the variable in the ftp storage
-            "ncInternVarName": "ASWDIR_S" # the value is the defined variable name  in the netCDF file
-        },
-        "aswdifd_s": {
-            "ncInternVarName": "ASWDIFD_S"
-        },
-        "t_2m": {
-            "ncInternVarName": "t2m"
-        }  
-    }
+    variables = ["aswdir_s", "aswdifd_s", "t_2m"]
     
     forecast = ICON_D2(locations = locationList, forecastHours = 3)
     data = forecast.collectData(varList = variables, cores = None) # Disable multiprocessing
