@@ -62,8 +62,7 @@ class ICON_D2:
         self._forecastHours = forecastHours
         self._locations = locations
         self._src = "https://opendata.dwd.de/weather/nwp/icon-d2/grib/"
-        self._currentRun = None
-    
+        self._currentRun = self._getCurrentRun(datetime.now(timezone.utc))   
     
     @property
     def locations(self):
@@ -80,7 +79,7 @@ class ICON_D2:
         return self._currentRun 
     
     
-    def getCurrentRun(self, now_utc):
+    def _getCurrentRun(self, now_utc):
         
         '''Gets the number of the current run by current time. 
         The latest run is fully available ~2h after initialisation.
@@ -138,13 +137,10 @@ class ICON_D2:
         '''
         
         urls = []
-        now_utc = datetime.now(timezone.utc)
-        currentRun = self.getCurrentRun(now_utc)
-        
-        urlDate = now_utc.strftime("%Y%m%d") 
-        
 
-        url = "{src}{run}/{var}".format(src = self._src, var = var, run = currentRun) 
+        urlDate = now_utc.strftime("%Y%m%d") 
+
+        url = "{src}{run}/{var}".format(src = self._src, var = var, run = self._currentRun) 
         
         hours = self._forecastHours
         
@@ -155,7 +151,7 @@ class ICON_D2:
             
             hStr = str(h).zfill(2)
             fileName = "icon-d2_germany_regular-lat-lon_single-level_{ds}{run}_0{h}_2d_{var}.grib2.bz2".format(h = hStr,
-                                                                                                      run = currentRun,
+                                                                                                      run = self._currentRun,
                                                                                                       var = var,
                                                                                                       ds = urlDate)
             filePath = "{url}/{fn}".format(url = url, fn = fileName) 
