@@ -12,9 +12,9 @@ setup(
     description="API for DWD's open weather grib data.",
     long_description=long_description,
     long_description_content_type='text/x-rst',
-    url="https://www.joanneum.at/",
+    url="https://github.com/prayer007/dwdGribExtractor",
     project_urls={
-        'Documentation': 'https://www.joanneum.at/',
+        'Documentation': 'https://github.com/prayer007/dwdGribExtractor',
     },
     packages=find_packages(),
     classifiers=[

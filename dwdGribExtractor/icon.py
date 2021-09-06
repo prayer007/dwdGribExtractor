@@ -8,7 +8,7 @@ import pandas as pd
 import os
 import glob
 from pathlib import Path
-
+import numpy as np
 
 
 class ICON_D2:
@@ -18,8 +18,20 @@ class ICON_D2:
     
     Parameters
     ----------
-    location : dict
-        lat, lon in geographic coordinates as a dict. coords = {"lat": 47, "lon": 15}
+    locations : dict
+        lat, lon in geographic coordinates as a dict for each location
+        e.g
+        .. code-block:: python
+            locationList = {     
+                "Vienna": {
+                    "lat": 48.20,
+                    "lon": 16.37     
+                },
+                "Graz": {
+                    "lat": 47.07,
+                    "lon": 15.43     
+                }
+            }
     forecastHours : int
         The forecast hours for which the data is collected
     tmpFp : string
@@ -31,7 +43,7 @@ class ICON_D2:
         If no path is given a default directory "tmp/icond2/" will be created.
     '''   
 
-    def __init__(self, location, forecastHours, tmpFp = None):
+    def __init__(self, locations, forecastHours, tmpFp = None):
         
         if tmpFp is None:
             
@@ -47,17 +59,14 @@ class ICON_D2:
         
         self._forecastHours = forecastHours
         
-        self._location = {
-            "lat": location["lat"],
-            "lon": location["lon"]
-        }
+        self._locations = locations
     
         self._src = "https://opendata.dwd.de/weather/nwp/icon-d2/grib/"
     
     @property
-    def location(self):
-        return self._location    
-    
+    def locations(self):
+        return self._locations  
+
     @property
     def forecastHours(self, value):
         return self._forecastHours    
@@ -171,7 +180,7 @@ class ICON_D2:
 
     def extractValuesFromGrib(self, fp, ncVarName, data):
         
-        '''Extract the value from the grib file for the location.
+        '''Extract the value from the grib file for the locations.
         
         Parameters
         ----------
@@ -191,27 +200,29 @@ class ICON_D2:
         if not isinstance(stepValues, Iterable):
             stepValues = [stepValues]
             hasStepIndex = False
+                    
+        for locName, coords in self.locations.items():
             
-            
-        for step in stepValues:
-            
-            lat = self.location["lat"]
-            lon = self.location["lon"] 
-            
-            
-            if hasStepIndex is True:
-                nearestPointVal = ncFile.sel(step = step,
-                                             latitude=lat, 
-                                             longitude=lon, 
-                                             method="nearest")[ncVarName].values
-            else:
-                nearestPointVal = ncFile.sel(latitude=lat, 
-                                             longitude=lon, 
-                                             method="nearest")[ncVarName].values
+            lat = coords["lat"]
+            lon = coords["lon"] 
+        
+            for step in stepValues:
                 
-            dt = ncFile.time.values + step
-            
-            data.loc[dt] = nearestPointVal
+                if hasStepIndex is True:
+                    nearestPointVal = ncFile.sel(step = step,
+                                                 latitude=lat, 
+                                                 longitude=lon, 
+                                                 method="nearest")[ncVarName].values
+                else:
+                    nearestPointVal = ncFile.sel(latitude=lat, 
+                                                 longitude=lon, 
+                                                 method="nearest")[ncVarName].values
+                    
+                dt = ncFile.time.values + step
+                
+                idx = "{n},{d}".format(n = locName, d = dt)
+                
+                data.loc[idx] = nearestPointVal
             
         os.remove(fp)
     
@@ -227,7 +238,7 @@ class ICON_D2:
  
         Returns
         -------
-        pd.Series
+        dict
             The collected data
         '''
         
@@ -253,6 +264,15 @@ class ICON_D2:
                 self.extractValuesFromGrib(tmpfp, varValues["ncInternVarName"], data)
             except Exception as err:
                 print("ERROR Can't extract values from grib file: {e}".format(e = err))
+        
+
+        idx_s = data.index.str.split(",")
+        idx_t = [(list(x)[0], np.datetime64(list(x)[1])) for x in idx_s]
+        data.index = pd.MultiIndex.from_tuples(idx_t, names=["location", "datetime"])
+        
+        #Localize Index
+        #localizedIndex = data.index.levels[1].tz_localize("UTC")
+        #data.index = data.index.set_levels(localizedIndex, level="datetime")
         
         result = {
            varKey: data 
@@ -313,6 +333,7 @@ class ICON_D2:
             pool = multiprocessing.Pool()
             result = pool.map(self.mainDataCollector, varList.items())
             pool.close()
+            pool.join()
 
         # Collect thte data
         for res in result:
@@ -331,8 +352,6 @@ class ICON_D2:
                 os.remove(filePath)
             except:
                 print("Error while deleting file : ", filePath)
-        
-        data.index = data.index.tz_localize("UTC")    
         
         return data        
         

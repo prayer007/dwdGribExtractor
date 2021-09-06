@@ -1,4 +1,4 @@
-dwdGrilbExtractor: A tiny Python interface to request and extract NWP grib file data from opendata.dwd.de
+dwdGribExtractor: A tiny Python interface to request and extract NWP grib file data from opendata.dwd.de
 ========================================================================================================
 
 .. image:: https://img.shields.io/pypi/v/cfgrib.svg
@@ -13,11 +13,18 @@ At the moment only ICON_D2 is supported.
 
 Supported weather variables
 ===========================
-For currently available weather variabels see: `ICON Database <https://www.dwd.de/DWD/forschung/nwv/fepub/icon_database_main.pdf/>`_
-Chapter 6.1.3 table 6.3
+For currently available weather variabels see: `ICON User Manual <https://www.dwd.de/SharedDocs/downloads/DE/modelldokumentationen/nwv/icon/icon_dbbeschr_aktuell.pdf?view=nasPublication&nn=495490/>`_
+Chapter 6.1.4 table 6.4
 
 Installation
 ============
+Install with pip::
+
+    $ pip install dwdGrilbExtractor
+    
+Dependencies
+============
+
 To read the grib2 files `xarray <http://xarray.pydata.org/en/stable/>`_ with `cfgrib <https://github.com/ecmwf/cfgrib/>`_ engine is used. 
 The easiest way to install *cfgrib* and all its binary dependencies is via `Conda <https://conda.io/>`_::
 
@@ -74,8 +81,73 @@ use eccodes on windows is to install it in an `MSYS <https://www.msys2.org/>`_ e
 
 Linux
 -----
-1) Install eccodes with apt or `build it by your own <https://gist.github.com/MHBalsmeier/a01ad4e07ecf467c90fad2ac7719844a>`_
+1. Install eccodes with apt or `build it by your own <https://gist.github.com/MHBalsmeier/a01ad4e07ecf467c90fad2ac7719844a>`_
 TODO
+
+Example
+============
+.. code-block:: python
+
+    locationList = {     
+        "Vienna": {
+            "lat": 48.20,
+            "lon": 16.37     
+        },
+        "Graz": {
+            "lat": 47.07,
+            "lon": 15.43     
+        }
+    }
+    
+    variables = {
+        "aswdir_s": { # the key is the subdirectory name to the variable in the ftp storage
+            "ncInternVarName": "ASWDIR_S" # the value is the defined variable name  in the netCDF file
+        },
+        "aswdifd_s": {
+            "ncInternVarName": "ASWDIFD_S"
+        },
+        "t_2m": {
+            "ncInternVarName": "t2m"
+        }  
+    }
+    
+    forecast = ICON_D2(locations = locationList, forecastHours = 3)
+    data = forecast.collectData(varList = variables, cores = None) # Disable multiprocessing
+    #data = forecast.collectData(varList = variables, cores = 4)
+    
+    
+    #### Indexing one location
+    loc = "Graz"
+    result = data.loc[loc]
+    result = data.loc[loc, "2021-09-06 06:15:00"]
+
+    #### Indexing multiple locations
+    loc = ["Graz", "Vienna"]
+    result = data.loc[loc]
+    
+    #### Indexing one location with datetime condition
+    loc = "Graz"
+    mask = data.loc[loc].index.get_level_values(0) > np.datetime64('2021-09-06T06:15:00')
+    mask = data.loc[loc].index.get_level_values(0).hour == 8
+    result = data.loc[loc][mask]
+    
+    #### Indexing multiple locations with datetime condition
+    loc = ["Graz", "Vienna"]
+    mask = data.loc[loc].index.get_level_values(1) > np.datetime64('2021-09-06 06:15:00')
+    mask = data.loc[loc].index.get_level_values(1).hour == 8
+    result = data.loc[loc][mask]
+    
+Knwon Issues
+============
+Windows
+-------
+- Multiprocessing on some windows machines may not work. Disable it by setting ``forecast.collectData(varList = variables, cores = None)`` 
+- `Spyder IDE <https://www.spyder-ide.org/>`_ does not produce print outputs if multiprocessing is enabled.
+- Dont run the code in Spyder with F5 or debug mode. This calls runfile() and sometimes crashes memory.  
+
+Author
+======
+Manuel Strohmaier
 
 License
 =======
