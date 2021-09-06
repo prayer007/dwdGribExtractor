@@ -1,8 +1,8 @@
 dwdGribExtractor: A tiny Python interface to request and extract NWP grib file data from opendata.dwd.de
 ========================================================================================================
 
-.. image:: https://img.shields.io/pypi/v/cfgrib.svg
-   :target: https://pypi.python.org/pypi/cfgrib/
+.. image:: https://img.shields.io/pypi/v/dwdGribExtractor.svg
+   :target: https://img.shields.io/pypi/v/dwdGribExtractor
 
 dwdGribExtractor is a smart package to easely extract data from `numerical weather prediction <https://www.dwd.de/EN/ourservices/nwp_forecast_data/nwp_forecast_data.html>`_ 
 grib files provided by DWD.
