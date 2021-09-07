@@ -1,7 +1,7 @@
 import requests
 from collections import Iterable
 import multiprocessing
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from bz2 import decompress
 import xarray as xr
 import pandas as pd
@@ -250,11 +250,16 @@ class ICON_D2:
                                                  longitude=lon, 
                                                  method="nearest")[ncVarName].values
                     
-                dt = ncFile.time.values + step
+                dt_start = ncFile.time.values + step
                 
-                idx = "{n},{d}".format(n = locName, d = dt)
+                timeResolution = int(60 / len(stepValues)) # in minutes 
+                
+                dt_end = dt_start + np.timedelta64(timeResolution, 'm')
+                
+                idx = "{n},{ds},{de}".format(n = locName, ds = dt_start, de = dt_end)
                 
                 data.loc[idx] = nearestPointVal
+                
             
         os.remove(fp)
     
@@ -296,8 +301,8 @@ class ICON_D2:
         
 
         idx_s = data.index.str.split(",")
-        idx_t = [(list(x)[0], np.datetime64(list(x)[1])) for x in idx_s]
-        data.index = pd.MultiIndex.from_tuples(idx_t, names=["location", "datetime"])
+        idx_t = [(list(x)[0], np.datetime64(list(x)[1]), np.datetime64(list(x)[2])) for x in idx_s]
+        data.index = pd.MultiIndex.from_tuples(idx_t, names=["location", "datetime_start", "datetime_end"])
         
         #Localize Index
         #localizedIndex = data.index.levels[1].tz_localize("UTC")
