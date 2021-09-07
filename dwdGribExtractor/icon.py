@@ -367,7 +367,7 @@ class ICON_D2:
             data[key] = val
 
         # Sort data
-        data = data.sort_values(["location", "datetime"])
+        data = data.sort_values(["location", "datetime_start"])
 
         # Remove all .idx files in the tmp folder
         path = "{tfp}/*grib*".format(tfp = self._tmpFp)
