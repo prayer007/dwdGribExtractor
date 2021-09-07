@@ -258,7 +258,7 @@ class ICON_D2:
                 
                 idx = "{n},{ds},{de}".format(n = locName, ds = dt_start, de = dt_end)
                 
-                data.loc[idx] = nearestPointVal
+                data.loc[idx] = np.float32(nearestPointVal)
                 
             
         os.remove(fp)
