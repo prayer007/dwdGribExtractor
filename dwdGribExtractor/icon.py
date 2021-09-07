@@ -138,6 +138,7 @@ class ICON_D2:
         
         urls = []
 
+        now_utc = datetime.now(timezone.utc)
         urlDate = now_utc.strftime("%Y%m%d") 
 
         url = "{src}{run}/{var}".format(src = self._src, var = var, run = self._currentRun) 
@@ -185,17 +186,29 @@ class ICON_D2:
 
     def _getVarnameFromNcFile(self, ncFile):
         
+        '''Extracts the nc intern weather variable name from the netCDF file
+        
+        Parameters
+        ----------
+        ncFile : xarray
+            The netCDF file
+            
+        Returns
+        -------
+        string
+            The nc intern weather variable name
+        ''' 
+        
         var = None
         
         for var in ncFile.variables:
             
             varDims = len(ncFile.variables[var].shape)
             
-            if varDims == 3:
+            if varDims >= 2:
                 ncVarName = var
         
-        return var
-
+        return ncVarName
 
 
     def extractValuesFromGrib(self, fp, data):
@@ -329,7 +342,7 @@ class ICON_D2:
             
             result = []
             
-            for item in varList.items():
+            for item in varList:
                 res = self.mainDataCollector(item)  
                 result.append(res)
               
@@ -347,6 +360,9 @@ class ICON_D2:
             val = list(res.items())[0][1] 
             
             data[key] = val
+
+        # Sort data
+        data = data.sort_values(["location", "datetime"])
 
         # Remove all .idx files in the tmp folder
         path = "{tfp}/*grib*".format(tfp = self._tmpFp)
