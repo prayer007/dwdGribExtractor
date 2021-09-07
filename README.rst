@@ -45,7 +45,7 @@ when not using *conda* please follow the *System dependencies* section there.
 Windows
 -------
 It is strongly recommended to use Unix enironment running *dwdGrib2location*. For 
-windows several issues my appear. At the moment *dwdGrib2location* is tested
+windows several issues may appear. At the moment *dwdGrib2location* is tested
 with Windows10 and works if following requirements are satiesfied.
 To build eccodes on windows by your own should be avoided. The easiest way to 
 use eccodes on windows is to install it in an `MSYS <https://www.msys2.org/>`_ environment. 
