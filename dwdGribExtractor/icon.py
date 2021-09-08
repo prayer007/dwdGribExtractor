@@ -64,8 +64,9 @@ class ICON_D2:
         self._forecastHours = forecastHours
         self._locations = locations
         self._src = "https://opendata.dwd.de/weather/nwp/icon-d2/grib/"
+        self._currentRunDateTime = None
         self._currentRun = self._getCurrentRun(datetime.now(timezone.utc)) 
-        self._currentRunDateTime = None 
+         
     
     @property
     def locations(self):
@@ -126,6 +127,12 @@ class ICON_D2:
         
         self._currentRun = run_hour     
         
+        now_utc = datetime.now(timezone.utc)
+        urlDate = now_utc.strftime("%Y%m%d")
+        
+        dateStr = "{ud}{cr}".format(ud = urlDate, cr = self._currentRun)
+        self._currentRunDateTime = datetime.strptime(dateStr, "%Y%m%d%H")
+        
         return run_hour
     
             
@@ -166,9 +173,6 @@ class ICON_D2:
             filePath = "{url}/{fn}".format(url = url, fn = fileName) 
             
             urls.append(filePath)
-    
-        dateStr = "{ud}{cr}".format(ud = urlDate, cr = self._currentRun)
-        self._currentRunDateTime = datetime.strptime(dateStr, "%Y%m%d%H")
     
         return urls
     
@@ -261,17 +265,12 @@ class ICON_D2:
                                                  longitude=lon, 
                                                  method="nearest")[ncVarName].values
                     
-                dt_start = ncFile.time.values + step
+                dt_forecast = ncFile.time.values + step
                 
-                timeResolution = int(60 / len(stepValues)) # in minutes 
-                
-                dt_end = dt_start + np.timedelta64(timeResolution, 'm')
-                
-                idx = "{n},{ds},{de}".format(n = locName, ds = dt_start, de = dt_end)
+                idx = "{n},{t},{de}".format(n = locName, t = ncFile.time.values, de = dt_forecast)
                 
                 data.loc[idx] = np.float32(nearestPointVal)
                 
-            
         os.remove(fp)
     
     
@@ -313,17 +312,11 @@ class ICON_D2:
 
         idx_s = data.index.str.split(",")
         idx_t = [(list(x)[0], np.datetime64(list(x)[1]), np.datetime64(list(x)[2])) for x in idx_s]
-        data.index = pd.MultiIndex.from_tuples(idx_t, names=["location", "datetime_start", "datetime_end"])
+        data.index = pd.MultiIndex.from_tuples(idx_t, names=["location", "dt_forecast_init", "dt_forecast"])
         
-        #Localize Index
-        #localizedIndex = data.index.levels[1].tz_localize("UTC")
-        #data.index = data.index.set_levels(localizedIndex, level="datetime")
-        
-        result = {
-           iterItem: data 
-        }        
-        
-        return result
+        data = data.rename(iterItem)
+
+        return data
     
     
     
@@ -351,8 +344,7 @@ class ICON_D2:
         pd.DataFrame
             The data as an dataframe
         ''' 
-    
-        data = pd.DataFrame()
+
     
         if cores is None:
             
@@ -370,15 +362,11 @@ class ICON_D2:
             pool.join()
 
         # Collect thte data
-        for res in result:
-            
-            key = list(res.items())[0][0]
-            val = list(res.items())[0][1] 
-            
-            data[key] = val
+        data = pd.DataFrame()
+        data = pd.concat(result, axis=1)
 
         # Sort data
-        data = data.sort_values(["location", "datetime_start"])
+        data = data.sort_values(["location", "dt_forecast"])
 
         # Remove all .idx files in the tmp folder
         path = "{tfp}/*grib*".format(tfp = self._tmpFp)
