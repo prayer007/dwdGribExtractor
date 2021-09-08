@@ -43,6 +43,8 @@ class ICON_D2:
         The number of forecast hours
     currentRun : string
         The hours as string of the current run
+    currentRunDateTime : datetime
+        The init datetime of the current run
     '''   
 
     def __init__(self, locations, forecastHours, tmpFp = None):
@@ -62,7 +64,8 @@ class ICON_D2:
         self._forecastHours = forecastHours
         self._locations = locations
         self._src = "https://opendata.dwd.de/weather/nwp/icon-d2/grib/"
-        self._currentRun = self._getCurrentRun(datetime.now(timezone.utc))   
+        self._currentRun = self._getCurrentRun(datetime.now(timezone.utc)) 
+        self._currentRunDateTime = None 
     
     @property
     def locations(self):
@@ -78,6 +81,11 @@ class ICON_D2:
     def currentRun(self):
         return self._currentRun 
     
+
+    @property
+    def currentRunDateTime(self):
+        return self._currentRunDateTime
+
     
     def _getCurrentRun(self, now_utc):
         
@@ -158,6 +166,9 @@ class ICON_D2:
             filePath = "{url}/{fn}".format(url = url, fn = fileName) 
             
             urls.append(filePath)
+    
+        dateStr = "{ud}{cr}".format(ud = urlDate, cr = self._currentRun)
+        self._currentRunDateTime = datetime.strptime(dateStr, "%Y%m%d%H")
     
         return urls
     
