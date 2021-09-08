@@ -27,6 +27,9 @@ class ICON_D2:
                 
     forecastHours : int
         The forecast hours for which the data is collected
+    run : string
+        The name of the run to load forecast. Possible values: 
+        "00", "03", "06" ... "18", "21", "23" 
     tmpFp : string
         The filepath to a folder where temporary files will be stored. This 
         is needed to extract data from grib2 files because with the used 
@@ -47,7 +50,7 @@ class ICON_D2:
         The init datetime of the current run
     '''   
 
-    def __init__(self, locations, forecastHours, tmpFp = None):
+    def __init__(self, locations, forecastHours, run = None, tmpFp = None):
         
         if tmpFp is None:
             
@@ -64,7 +67,11 @@ class ICON_D2:
         self._forecastHours = forecastHours
         self._locations = locations
         self._src = "https://opendata.dwd.de/weather/nwp/icon-d2/grib/"
-        self._currentRun = self._getCurrentRun(datetime.now(timezone.utc)) 
+        
+        if run is None:
+            self._currentRun = self._getCurrentRun(datetime.now(timezone.utc)) 
+        else:
+            self._currentRun =  run
          
     
     @property
