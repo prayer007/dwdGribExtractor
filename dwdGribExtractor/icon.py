@@ -64,7 +64,6 @@ class ICON_D2:
         self._forecastHours = forecastHours
         self._locations = locations
         self._src = "https://opendata.dwd.de/weather/nwp/icon-d2/grib/"
-        self._currentRunDateTime = None
         self._currentRun = self._getCurrentRun(datetime.now(timezone.utc)) 
          
     
@@ -82,11 +81,6 @@ class ICON_D2:
     def currentRun(self):
         return self._currentRun 
     
-
-    @property
-    def currentRunDateTime(self):
-        return self._currentRunDateTime
-
     
     def _getCurrentRun(self, now_utc):
         
@@ -126,12 +120,6 @@ class ICON_D2:
             run_hour = "21"
         
         self._currentRun = run_hour     
-        
-        now_utc = datetime.now(timezone.utc)
-        urlDate = now_utc.strftime("%Y%m%d")
-        
-        dateStr = "{ud}{cr}".format(ud = urlDate, cr = self._currentRun)
-        self._currentRunDateTime = datetime.strptime(dateStr, "%Y%m%d%H")
         
         return run_hour
     
