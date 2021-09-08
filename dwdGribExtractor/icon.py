@@ -116,7 +116,7 @@ class ICON_D2:
             run_hour = "15"
         if h >= 20:
             run_hour = "18"            
-        if h >= 23 and h < 2:
+        if h >= 23 or h < 2:
             run_hour = "21"
         
         self._currentRun = run_hour     
