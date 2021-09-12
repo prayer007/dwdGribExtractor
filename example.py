@@ -15,8 +15,9 @@ def main():
     }
     
     variables = ["aswdir_s", "aswdifd_s", "t_2m"]
+    #variables = ["aswdifd_s","t_2m"]
     
-    forecast = ICON_D2(locations = locationList, forecastHours = 3)
+    forecast = ICON_D2(locations = locationList, forecastHours = 2)
     #data = forecast.collectData(varList = variables, cores = None) # Disable multiprocessing
     data = forecast.collectData(varList = variables, cores = 4)
     

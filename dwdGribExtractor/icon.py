@@ -123,7 +123,7 @@ class ICON_D2:
             run_hour = "15"
         if h >= 20:
             run_hour = "18"            
-        if h >= 23 or h < 2:
+        if h >= 24 or h < 2:
             run_hour = "21"
         
         self._currentRun = run_hour     
@@ -145,10 +145,13 @@ class ICON_D2:
         list
             List with urls
         '''
-        
-        urls = []
-
+    
+        currentRun = self._currentRun
         now_utc = datetime.now(timezone.utc)
+        
+        if currentRun == "21":
+            now_utc = now_utc - timedelta(days=1) 
+        
         urlDate = now_utc.strftime("%Y%m%d") 
 
         url = "{src}{run}/{var}".format(src = self._src, var = var, run = self._currentRun) 
@@ -157,12 +160,13 @@ class ICON_D2:
         
         if self._forecastHours is None:
             hours = 49
-        
+         
+        urls = []
         for h in range(hours):
             
             hStr = str(h).zfill(2)
             fileName = "icon-d2_germany_regular-lat-lon_single-level_{ds}{run}_0{h}_2d_{var}.grib2.bz2".format(h = hStr,
-                                                                                                      run = self._currentRun,
+                                                                                                      run = currentRun,
                                                                                                       var = var,
                                                                                                       ds = urlDate)
             filePath = "{url}/{fn}".format(url = url, fn = fileName) 
