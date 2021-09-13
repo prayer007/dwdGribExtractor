@@ -62,7 +62,7 @@ class ICON_D2:
                 os.makedirs(p)
             
         else:
-            self._forecastHours = tmpFp
+            self._tmpFp = tmpFp
         
         self._forecastHours = forecastHours
         self._locations = locations
